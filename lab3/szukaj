@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#zmienne
+
+declare -i files
+tempint=0
+
+#sprawdz argumenty
+
+
+if [ "$#" -lt 3 ]
+then
+	exit
+else
+	plik=$1
+	katalog=$2
+fi
+	files=$((files+returnCode))
+#szukaj
+
+for i in $(find "$katalog" -maxdepth 1 -mindepth 1 -type d )
+do
+	tempint=$(./szukaj $plik $i "0")
+	echo "$tempint"
+    	#files=$((files+tempint))
+	wait $!
+done
+
+
+for i in $(find "$katalog" -maxdepth 1 -mindepth 1 -type f -printf "%f\n")
+do
+	if [ "$i" == "$plik" ]
+	then 
+		echo "FOUND: Found '$i' in folder '$katalog'"
+		files=$((files+1))
+	fi
+done
+	echo "return code: $files"
+	echo " "
+
+exit "$files"
