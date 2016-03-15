@@ -1,0 +1,8 @@
+#!/bin/bash
+
+while true
+   do
+      echo "Mistrzu"
+      sleep 5
+   done
+   exit 0

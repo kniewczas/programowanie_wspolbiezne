@@ -1,0 +1,10 @@
+#!/bin/bash
+
+while true
+do
+if [ -f liczba ]
+then
+variable=$(cat liczba)
+echo 111$variable > wyniki
+fi
+done

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+read x
+echo $x > liczba
+
+if [ -f wyniki ]
+then
+cat wyniki
+fi
