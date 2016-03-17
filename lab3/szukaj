@@ -26,16 +26,18 @@ fi
 for i in $(find "$katalog" -maxdepth 1 -mindepth 1 -type d )
 do
 	./szukaj $plik $i "1" &
-	echo   " prcoes : $!"
     	files=$((files+$?))
 	PROCESLIST+=("$!")
 done
 	
-#for i in "${PROCESLIST[@]}"
-#do
-	#echo "PRCOESLIST: $i"
-   	#wait $i
-#done
+for i in "${PROCESLIST[@]}"
+do
+	if [  "$i" ]
+	then
+	wait "$i"
+	files=$((files+$?))
+	fi
+done
 
 for i in $(find "$katalog" -maxdepth 1 -mindepth 1 -type f -printf "%f\n")
 do
