@@ -4,12 +4,14 @@
 
 declare -i files
 tempint=0
+PROCESLIST=
 
 #sprawdz argumenty
 
 
-if [ "$#" -lt 3 ]
+if [ "$#" -lt 2 ]
 then
+	echo "Za malo argmetnow"
 	exit
 else
 	plik=$1
@@ -18,14 +20,22 @@ fi
 	files=$((files+returnCode))
 #szukaj
 
+	declare -i num
+	num=0
+
 for i in $(find "$katalog" -maxdepth 1 -mindepth 1 -type d )
 do
-	tempint=$(./szukaj $plik $i "0")
-	echo "$tempint"
-    	#files=$((files+tempint))
-	wait $!
+	./szukaj $plik $i "1" &
+	echo   " prcoes : $!"
+    	files=$((files+$?))
+	PROCESLIST+=("$!")
 done
-
+	
+#for i in "${PROCESLIST[@]}"
+#do
+	#echo "PRCOESLIST: $i"
+   	#wait $i
+#done
 
 for i in $(find "$katalog" -maxdepth 1 -mindepth 1 -type f -printf "%f\n")
 do
@@ -35,7 +45,12 @@ do
 		files=$((files+1))
 	fi
 done
-	echo "return code: $files"
-	echo " "
+	if [ -z "$3" ]
+	then
+		if [ "$files" -eq 0 ]
+		then
+		echo "Nie znaleziono"
+		fi
+	fi
 
 exit "$files"
