@@ -2,57 +2,60 @@
 
 #zmienne
 
-declare -i files
-tempint=0
+declare -i foundfiles
 PROCESLIST=
+foundfiles=0
 
 #sprawdz argumenty
-
 
 if [ "$#" -lt 2 ]
 then
 	echo "Za malo argmetnow"
 	exit
 else
-	plik=$1
-	katalog=$2
+	file=$1
+	folder=$2
+	status=$3
 fi
-	files=$((files+returnCode))
-#szukaj
 
-	declare -i num
-	num=0
+#szukaj katalogow
 
-for i in $(find "$katalog" -maxdepth 1 -mindepth 1 -type d )
+for i in $(find "$folder" -maxdepth 1 -mindepth 1 -type d )
 do
-	./szukaj $plik $i "1" &
-    	files=$((files+$?))
+	./szukaj $file $i "1" &
 	PROCESLIST+=("$!")
 done
-	
+
+#czeaknie na procesy
+
 for i in "${PROCESLIST[@]}"
 do
 	if [  "$i" ]
 	then
 	wait "$i"
-	files=$((files+$?))
+	foundfiles=$((foundfiles+$?))
 	fi
 done
 
-for i in $(find "$katalog" -maxdepth 1 -mindepth 1 -type f -printf "%f\n")
+#szukanie plikow
+
+for i in $(find "$folder" -maxdepth 1 -mindepth 1 -type f -printf "%f\n")
 do
-	if [ "$i" == "$plik" ]
+	if [ "$i" == "$file" ]
 	then 
-		echo "FOUND: Found '$i' in folder '$katalog'"
-		files=$((files+1))
+		echo "FOUND: Found '$i' in folder '$folder'"
+		foundfiles=$((foundfiles+1))
 	fi
 done
-	if [ -z "$3" ]
+
+#podsumowanie z arg wyjsciowymi wszystkich procesow potomnyhc
+
+	if [ -z "$status" ]
 	then
-		if [ "$files" -eq 0 ]
+		if [ "$foundfiles" -eq 0 ]
 		then
 		echo "Nie znaleziono"
 		fi
 	fi
 
-exit "$files"
+exit "$foundfiles"
