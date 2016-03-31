@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#vars
+
+number=$1
+serwer=$2
+
+#check number
+
+re='^[0-9]+$'
+if ! [[ $number =~ $re ]] ; then
+   echo "error: Not a number" >&2; exit 1
+fi
+
+if ! [ -p "./serwerfifo" ] ; then
+	echo "error: serwer prolbem" >&2; exit 1
+fi
+
+if ! [ -p "./klientfifo" ] ; then
+	mkfifo "./klientfifo" 
+else
+	echo "$number" > ./serwerfifo
+fi
+
+read line < ./klientfifo
+echo $line

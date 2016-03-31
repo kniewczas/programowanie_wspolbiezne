@@ -1,0 +1,23 @@
+#!/bin/bash
+
+trap '' SIGHUP
+trap '' SIGTERM
+
+if [ "$1" ]; then
+
+		if [ -p "./klientfifo" ] ; then
+			echo $(($1 + $1)) > ./klientfifo
+		fi
+else
+		if ! [ -p "./serwerfifo" ] ; then
+			mkfifo "./serwerfifo" 
+		fi
+		
+		while true
+		do
+			if read line < ./serwerfifo ; then
+				./serwer $line
+			fi
+		done
+fi
+			
