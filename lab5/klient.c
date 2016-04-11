@@ -1,62 +1,95 @@
-#include <fcntl.h> 
+#include <stdlib.h>
 #include <unistd.h>
-#include <stdlib.h> 
-#include <stdio.h>
+#include <fcntl.h>
 #include <string.h>
+#include <stdio.h>
 
-typedef struct _CLIENT_DATA
+typedef struct _MESSAGE_INFO
 {
-	int messageLength;
-	int ID;
-	char * homePath;
-}CLIENT_DATA;
+        unsigned int length;
+        int id;
+        char * homepath;
 
- int getHomePath(CLIENT_DATA *data)
+}MESSAGE_INFO;
+
+int getID(char * arg)
 {
-	data->homePath = getenv("HOME");
-	
-	if(data->homePath != NULL)
-	{
-	   return 0;
-	}
-	return 1;
+        if(arg != NULL)
+        {
+                int id = 0;
+                sscanf(arg, "%d", &id);
+                return id;
+        }
+        else
+        {
+                printf("Nie podales id!\n");
+                return -1;
+        }
 }
 
-int main()
+void sendMessage(int client, void * data)
 {
-	//int result;
-	
-	CLIENT_DATA data;
-	CLIENT_DATA *data2 = &data;
-	CLIENT_DATA *data3 = &data; 
-	int length = 0;
-	unsigned char * message = malloc(sizeof(CLIENT_DATA));
+        unsigned char * buffer;
+        buffer = (char *) malloc(sizeof(int) + ((MESSAGE_INFO *)data)->length);
+        memcpy(buffer, &((MESSAGE_INFO *)data)->length, sizeof(int));
+        memcpy(buffer + sizeof(int), &((MESSAGE_INFO *)data)->id, sizeof(int));
+        memcpy(buffer + (2 * sizeof(int)), ((MESSAGE_INFO *)data)->homepath, ((MESSAGE_INFO *)data)->length - sizeof(int));
 
+        write(client, buffer, ((MESSAGE_INFO *)data)->length + sizeof(int));
+        free(buffer);
+}
 
-	data2->ID = 1;
-	data2->homePath = getenv("HOME");
-	length = sizeof(int) + strlen(data2->homePath);
-	data2->messageLength = length;
-	
-	memcpy(message, data2, sizeof(*data2));
-	printf("%c" , message[0]);
-	
-	//przekazac message przez kolejke fifo
-	//dopisac parser wiadomosci po stronie serwera
-	
-	//memcpy(data3, message, strlen(message));
-	
-	/*if(result == 1)
+void getServerData(int server)
+{
+        unsigned char * surname = malloc(13);;
+        int length = 0;
+	int i,j;
+
+	fsync(server);
+	read(server, &i, sizeof(int));
+	if((i=read(server, surname, i)) > 0)
 	{
-		printf("Writing name failed");
-		return 1;
+		for(j=0;j<8;j++)
+		printf(" %d " , surname[j]);
+	//printf("%s", surname);
 	}
-	else
-	{
-		printf("%s", data2->homePath);	
-	}*/
+	printf("%s", surname);
+//	if((i = read(server, &length, sizeof(int))) > 0)
+//	printf("%d \n\n received[%d]", length, i);
+//	surname = malloc(8);
+	//read(server, surname,8);
+	//int j;
+	//for(j = 0; j< 8; j++)
+	//printf("%d\n", surname[j]);
+//        if((i = read(server, &length, sizeof(int))) > 0)
+//	{
+	   //read(server, &length, sizeof(int));
+           //surname = (char *) malloc(length);
+           //read(server, surname, length);
+           //printf("%s   \n   ", surname);
+//	}
+        //free(surname);
+}
+
+int main(int argc, char * argv[])
+{
+	MESSAGE_INFO data;
 	
-	printf("%s" , data3->homePath);	
-		
-	return 0;
+	data.id = getID(argv[1]);
+	data.homepath = getenv("HOME");
+	data.length = sizeof(int) + strlen(data.homepath);
+	
+	if(data.id < 0)
+	return 1;
+
+	int client = open("clientFifo", O_WRONLY);
+	int server = open("serverFifo", O_RDONLY);
+
+	sendMessage(client, &data);
+	getServerData(server);
+
+	//int a =5;
+	//int b = 10;
+	//write(client, &a, sizeof(int));
+	//write(client, &b, sizeof(int));
 }
