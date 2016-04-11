@@ -5,6 +5,7 @@
 #include <string.h>
 #define DB_SIZE 10
 #define MAX_LINE 70
+#define DB_DATA_FILE "data"
 
 typedef struct _CLIENT_DATA
 {
@@ -18,26 +19,26 @@ typedef struct _MESSAGE_DATA
 	char * homepath;
 }MESSAGE_DATA;
 
-
 int initiallizeDatabase(void * data)
 {
         FILE * fp;
-        char buf[MAX_LINE];
+
+        char buffer[MAX_LINE];
         int i = 0;
 
-        if(fp = fopen("data", "r"))
+        if(fp = fopen(DB_DATA_FILE, "r"))
         {
-                while((fgets(buf, sizeof(buf), fp) != NULL) && (i<DB_SIZE))
+                while((fgets(buffer, sizeof(buffer), fp) != NULL) && (i<DB_SIZE))
                 {
                         ((CLIENT_DATA *)data)[i].surname = (char *) malloc(MAX_LINE);
-                        sscanf(buf, "%d %20s", &((CLIENT_DATA *)data)[i].id, ((CLIENT_DATA *)data)[i].surname);
+                        sscanf(buffer, "%d %20s", &((CLIENT_DATA *)data)[i].id, ((CLIENT_DATA *)data)[i].surname);
                         i++;
                 }
                 fclose(fp);
         }
         else
         {
-		printf("nie moge otwrozy cpliku");
+		printf("Nie moge otworzyc pliku");
                 return 1;
         }
         return 0;
@@ -47,12 +48,10 @@ char * getSurnameByID(void * data, int id)
 {
         int i;
 
-	printf("my id: %d", id);
         for(i = 0; i < DB_SIZE; i++)
         {
                 if(((CLIENT_DATA *)data)[i].id == id)
                 {
-			printf("inside: %s", ((CLIENT_DATA *)data)[i].surname);
                         return ((CLIENT_DATA *)data)[i].surname;
                 }
         }
@@ -62,47 +61,42 @@ char * getSurnameByID(void * data, int id)
 
 MESSAGE_DATA getClientData(int client, int size)
 {
-        MESSAGE_DATA data = {0,""};
-        unsigned char * message;
+        MESSAGE_DATA data;
 
-        message = (char *) malloc(size);
-        read(client, message, size);
-        memcpy(&data.id, message, sizeof(int));
+        unsigned char * buffer = (char *) malloc(size);
+
+        read(client, buffer, size);
+
+        memcpy(&data.id, buffer, sizeof(int));
         data.homepath = (char *) malloc(size - sizeof(int));
-        memcpy(data.homepath, (message + sizeof(int)), size - sizeof(int));
-        free(message);
-        return data;
+        memcpy(data.homepath, (buffer + sizeof(int)), size - sizeof(int));
+        
+	free(buffer);
+	return data;
 }
 
 void sendMessage(int server, void * db, void * data)
 {
  
+	int length = 0;
 	unsigned char * message;
         unsigned char * surname = getSurnameByID(db, ((MESSAGE_DATA *)data)->id);
-	int length;
 
-	printf("surname:\n %s\n", surname);
         message = (char *) malloc(strlen(surname) + sizeof(int) + 1);
         length = strlen(surname);
-	printf("length :\n %d\n" , length);
-        
         memcpy(message, &length , sizeof(int));
-        memcpy(message+sizeof(int), surname, length);
-	length += sizeof(int);
+        memcpy(message + sizeof(int), surname, length);
 
-	//int i =0;
-	//for(i = 0; i< length; i++)
-	//{
-	//	printf(" %d " , message[i]); 
-	//}
-        write(server, message, length);
+        write(server, message, length + sizeof(int));
+
 	free(message);
 }
 
 int main()
 {
-	CLIENT_DATA dbdata[DB_SIZE] = {{0,""},};
+	CLIENT_DATA dbdata[DB_SIZE];
 	MESSAGE_DATA data;
+
 	initiallizeDatabase(dbdata);
 
 	mkfifo("clientFifo", 0666);
@@ -111,16 +105,17 @@ int main()
 	int client = open("clientFifo", O_RDONLY);
 	int server = open("serverFifo", O_WRONLY);
 
-	int x = 0;
-	int i = 0;
+	int messageLength = 0;
+	int bytes = 0;
 
 	while(1)
-	     if((i = read(client, &x, sizeof(int))) > 0)
+	{
+	     if((bytes = read(client, &messageLength, sizeof(int))) > 0)
              {
-		printf("Received: [%d]\n bits: %d\n", x,i);
-		data = getClientData(client, x);
+		data = getClientData(client, messageLength);
 		sendMessage(server, &dbdata, &data);
-             }
+            }
+	}
 
 	close(client);
 	close(server);
