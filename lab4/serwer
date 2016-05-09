@@ -2,20 +2,28 @@
 
 trap '' SIGHUP
 trap '' SIGTERM
+#trap exit 1 SIGUSR1
+
+klient=""
 
 if [ "$1" ]; then
 
-		if [ -p "./klientfifo" ] ; then
-			echo $(($1 + $1)) > ./klientfifo
+		if [ "$2" ]
+		then
+		klient="$2"
+
+			if [ -p "/$klient/klientfifo" ] ; then
+			echo $(($1 + $1)) > "/$klient/klientfifo"
+			fi
 		fi
 else
-		if ! [ -p "./serwerfifo" ] ; then
-			mkfifo "./serwerfifo" 
+		if ! [ -p "/$HOME/serwerfifo" ] ; then
+			mkfifo "/$HOME/serwerfifo"
 		fi
 		
 		while true
 		do
-			if read line < ./serwerfifo ; then
+			if read line < "/$HOME/serwerfifo" ; then
 				./serwer $line
 			fi
 		done

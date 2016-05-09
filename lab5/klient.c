@@ -43,17 +43,19 @@ void sendMessage(int client, void * data)
 
 void getServerData(int server)
 {
-        unsigned char * surname = malloc(13);;
+        unsigned char * surname;// = malloc(13);;
         int length = 0;
 	int bytes = 0;
 
 	fsync(server);
 	read(server, &length, sizeof(int));
+	surname = malloc(length);
+
 	if((bytes=read(server, surname, length)) > 0)
 	{
 		//for(j=0;j<8;j++)
 	}
-	printf("%s", surname);
+	printf("%s\n", surname);
 }
 
 int main(int argc, char * argv[])
@@ -68,6 +70,11 @@ int main(int argc, char * argv[])
 	{
 		return 1;
 	}
+	//char path[40];
+	//strcpy(path,getenv("HOME"));
+	//strcat(path, "/serverFifo");
+	//printf("%s" , path);
+	//mkfifo(path, 0666);
 
 	int client = open("clientFifo", O_WRONLY);
 	int server = open("serverFifo", O_RDONLY);

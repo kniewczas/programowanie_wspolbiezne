@@ -9,18 +9,24 @@ serwer=$2
 
 re='^[0-9]+$'
 if ! [[ $number =~ $re ]] ; then
-   echo "error: Not a number" >&2; exit 1
+      echo "error: Not a number"
+      exit 1
 fi
 
-if ! [ -p "./serwerfifo" ] ; then
-	echo "error: serwer prolbem" >&2; exit 1
+if ! [ -p "/home/studinf/$serwer/serwerfifo" ] ; then
+	echo "error: serwer problem"
+	echo "/home/studinf/$serwer/serwerfifo" 
+        exit 1
 fi
 
-if ! [ -p "./klientfifo" ] ; then
-	mkfifo "./klientfifo" 
-else
-	echo "$number" > ./serwerfifo
+if ! [ -p "/$HOME/klientfifo" ] ; then
+	mkfifo "/$HOME/klientfifo"
 fi
 
-read line < ./klientfifo
+echo "$number $HOME" > "/home/studinf/$serwer/serwerfifo"
+
+#read line < "/$HOME/klientfifo
+while read line; do echo "$line"; done<"/$HOME/klientfifo" 
 echo $line
+
+exit 0
